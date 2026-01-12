@@ -4,6 +4,8 @@ import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { Pin, Trash2, CheckSquare, Upload, Search } from 'lucide-react';
 import { Category, LinkItem } from '../types';
 import Icon from './Icon';
+import LinkCard from './LinkCard';
+import SortableLinkCard from './SortableLinkCard';
 
 interface LinkSectionsProps {
   linksCount: number;
@@ -17,6 +19,7 @@ interface LinkSectionsProps {
   isSortingMode: string | null;
   isBatchEditMode: boolean;
   selectedLinksCount: number;
+  selectedLinks: Set<string>;
   sensors: SensorDescriptor<any>[];
   onPinnedDragEnd: (event: DragEndEvent) => void;
   onDragEnd: (event: DragEndEvent) => void;
@@ -25,8 +28,9 @@ interface LinkSectionsProps {
   onSelectAll: () => void;
   onBatchMove: (targetCategoryId: string) => void;
   onAddLink: () => void;
-  renderLinkCard: (link: LinkItem) => React.ReactNode;
-  SortableLinkCard: React.FC<{ link: LinkItem }>;
+  onLinkSelect: (id: string) => void;
+  onLinkContextMenu: (e: React.MouseEvent, link: LinkItem) => void;
+  onLinkEdit: (link: LinkItem) => void;
 }
 
 const LinkSections: React.FC<LinkSectionsProps> = ({
@@ -41,6 +45,7 @@ const LinkSections: React.FC<LinkSectionsProps> = ({
   isSortingMode,
   isBatchEditMode,
   selectedLinksCount,
+  selectedLinks,
   sensors,
   onPinnedDragEnd,
   onDragEnd,
@@ -49,8 +54,9 @@ const LinkSections: React.FC<LinkSectionsProps> = ({
   onSelectAll,
   onBatchMove,
   onAddLink,
-  renderLinkCard,
-  SortableLinkCard
+  onLinkSelect,
+  onLinkContextMenu,
+  onLinkEdit
 }) => {
   const showPinnedSection = pinnedLinks.length > 0 && !searchQuery && (selectedCategory === 'all');
   const showMainSection = (selectedCategory !== 'all' || searchQuery);
@@ -101,14 +107,31 @@ const LinkSections: React.FC<LinkSectionsProps> = ({
               >
                 <div className={`grid gap-5 ${gridClassName}`}>
                   {pinnedLinks.map((link) => (
-                    <SortableLinkCard key={link.id} link={link} />
+                    <SortableLinkCard
+                      key={link.id}
+                      link={link}
+                      siteCardStyle={siteCardStyle}
+                      isSortingMode={false}
+                      isSortingPinned={isSortingPinned}
+                    />
                   ))}
                 </div>
               </SortableContext>
             </DndContext>
           ) : (
             <div className={`grid gap-5 ${gridClassName}`}>
-              {pinnedLinks.map((link) => renderLinkCard(link))}
+              {pinnedLinks.map((link) => (
+                <LinkCard
+                  key={link.id}
+                  link={link}
+                  siteCardStyle={siteCardStyle}
+                  isBatchEditMode={isBatchEditMode}
+                  isSelected={selectedLinks.has(link.id)}
+                  onSelect={onLinkSelect}
+                  onContextMenu={onLinkContextMenu}
+                  onEdit={onLinkEdit}
+                />
+              ))}
             </div>
           )}
         </section>
@@ -147,8 +170,8 @@ const LinkSections: React.FC<LinkSectionsProps> = ({
                 <button
                   onClick={onToggleBatchEditMode}
                   className={`flex items-center gap-1 px-3 py-1.5 text-white text-xs font-medium rounded-full transition-colors ${isBatchEditMode
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-blue-600 hover:bg-blue-700'
+                      ? 'bg-red-600 hover:bg-red-700'
+                      : 'bg-blue-600 hover:bg-blue-700'
                     }`}
                   title={isBatchEditMode ? '退出批量编辑' : '批量编辑'}
                 >
@@ -219,14 +242,31 @@ const LinkSections: React.FC<LinkSectionsProps> = ({
                 >
                   <div className={`grid gap-5 ${gridClassName}`}>
                     {displayedLinks.map((link) => (
-                      <SortableLinkCard key={link.id} link={link} />
+                      <SortableLinkCard
+                        key={link.id}
+                        link={link}
+                        siteCardStyle={siteCardStyle}
+                        isSortingMode={true}
+                        isSortingPinned={false}
+                      />
                     ))}
                   </div>
                 </SortableContext>
               </DndContext>
             ) : (
               <div className={`grid gap-5 ${gridClassName}`}>
-                {displayedLinks.map((link) => renderLinkCard(link))}
+                {displayedLinks.map((link) => (
+                  <LinkCard
+                    key={link.id}
+                    link={link}
+                    siteCardStyle={siteCardStyle}
+                    isBatchEditMode={isBatchEditMode}
+                    isSelected={selectedLinks.has(link.id)}
+                    onSelect={onLinkSelect}
+                    onContextMenu={onLinkContextMenu}
+                    onEdit={onLinkEdit}
+                  />
+                ))}
               </div>
             )
           )}

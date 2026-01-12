@@ -8,12 +8,9 @@ import {
   KeyboardSensor,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   sortableKeyboardCoordinates,
-  useSortable,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { LinkItem, Category, DEFAULT_CATEGORIES, INITIAL_LINKS, WebDavConfig, AIConfig, SearchMode, ExternalSearchSource, SearchConfig } from './types';
+import { LinkItem, Category, WebDavConfig, AIConfig, SearchMode, ExternalSearchSource, SearchConfig } from './types';
 import { parseBookmarks } from './services/bookmarkParser';
 import LinkModal from './components/LinkModal';
 import CategoryManagerModal from './components/CategoryManagerModal';
@@ -26,6 +23,7 @@ import QRCodeModal from './components/QRCodeModal';
 import Sidebar from './components/Sidebar';
 import MainHeader from './components/MainHeader';
 import LinkSections from './components/LinkSections';
+import { useDataStore } from './hooks/useDataStore';
 
 // --- 配置项 ---
 // 项目核心仓库地址
@@ -41,8 +39,7 @@ type ThemeMode = 'light' | 'dark' | 'system';
 
 function App() {
   // --- State ---
-  const [links, setLinks] = useState<LinkItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { links, categories, setLinks, setCategories, updateData, addLink, updateLink, deleteLink, togglePin: togglePinStore, reorderLinks, reorderPinnedLinks, deleteCategory: deleteCategoryStore, importData } = useDataStore();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [darkMode, setDarkMode] = useState(false);
@@ -145,65 +142,7 @@ function App() {
 
   // --- Helpers & Sync Logic ---
 
-  const loadFromLocal = () => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        let loadedCategories = parsed.categories || DEFAULT_CATEGORIES;
 
-        // 确保"常用推荐"分类始终存在，并确保它是第一个分类
-        if (!loadedCategories.some(c => c.id === 'common')) {
-          loadedCategories = [
-            { id: 'common', name: '常用推荐', icon: 'Star' },
-            ...loadedCategories
-          ];
-        } else {
-          // 如果"常用推荐"分类已存在，确保它是第一个分类
-          const commonIndex = loadedCategories.findIndex(c => c.id === 'common');
-          if (commonIndex > 0) {
-            const commonCategory = loadedCategories[commonIndex];
-            loadedCategories = [
-              commonCategory,
-              ...loadedCategories.slice(0, commonIndex),
-              ...loadedCategories.slice(commonIndex + 1)
-            ];
-          }
-        }
-
-        // 检查是否有链接的categoryId不存在于当前分类中，将这些链接移动到"常用推荐"
-        const validCategoryIds = new Set(loadedCategories.map(c => c.id));
-        let loadedLinks = parsed.links || INITIAL_LINKS;
-        loadedLinks = loadedLinks.map(link => {
-          if (!validCategoryIds.has(link.categoryId)) {
-            return { ...link, categoryId: 'common' };
-          }
-          return link;
-        });
-
-        setLinks(loadedLinks);
-        setCategories(loadedCategories);
-        return { links: loadedLinks, categories: loadedCategories };
-      } catch (e) {
-        setLinks(INITIAL_LINKS);
-        setCategories(DEFAULT_CATEGORIES);
-        return { links: INITIAL_LINKS, categories: DEFAULT_CATEGORIES };
-      }
-    } else {
-      setLinks(INITIAL_LINKS);
-      setCategories(DEFAULT_CATEGORIES);
-      return { links: INITIAL_LINKS, categories: DEFAULT_CATEGORIES };
-    }
-  };
-
-  const updateData = (newLinks: LinkItem[], newCategories: Category[]) => {
-    // 1. Optimistic UI Update
-    setLinks(newLinks);
-    setCategories(newCategories);
-
-    // 2. Save to Local Cache
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ links: newLinks, categories: newCategories }));
-  };
 
   // --- Context Menu Functions ---
   const handleContextMenu = (event: React.MouseEvent, link: LinkItem) => {
@@ -298,39 +237,7 @@ function App() {
     closeContextMenu();
   };
 
-  // 加载本地图标缓存
-  const loadLinkIcons = (linksToLoad: LinkItem[]) => {
-    let cache: Record<string, string> = {};
-    try {
-      const stored = localStorage.getItem(FAVICON_CACHE_KEY);
-      cache = stored ? JSON.parse(stored) : {};
-    } catch (e) {
-      cache = {};
-    }
 
-    if (!cache || Object.keys(cache).length === 0) return;
-
-    const updatedLinks = linksToLoad.map(link => {
-      if (!link.url) return link;
-      try {
-        let domain = link.url;
-        if (!link.url.startsWith('http://') && !link.url.startsWith('https://')) {
-          domain = 'https://' + link.url;
-        }
-        const urlObj = new URL(domain);
-        const cachedIcon = cache[urlObj.hostname];
-        if (!cachedIcon) return link;
-        if (!link.icon || link.icon.includes('faviconextractor.com') || !cachedIcon.includes('faviconextractor.com')) {
-          return { ...link, icon: cachedIcon };
-        }
-      } catch (e) {
-        return link;
-      }
-      return link;
-    });
-
-    setLinks(updatedLinks);
-  };
 
   const buildDefaultSearchSources = (): ExternalSearchSource[] => {
     const now = Date.now();
@@ -492,10 +399,7 @@ function App() {
       setIsModalOpen(true);
     }
 
-    const localData = loadFromLocal();
-    if (localData) {
-      loadLinkIcons(localData.links);
-    }
+
   }, []);
 
   useEffect(() => {
@@ -618,185 +522,35 @@ function App() {
 
   // --- Actions ---
   const handleImportConfirm = (newLinks: LinkItem[], newCategories: Category[]) => {
-    // Merge categories: Avoid duplicate names/IDs
-    const mergedCategories = [...categories];
-
-    // 确保"常用推荐"分类始终存在
-    if (!mergedCategories.some(c => c.id === 'common')) {
-      mergedCategories.push({ id: 'common', name: '常用推荐', icon: 'Star' });
-    }
-
-    newCategories.forEach(nc => {
-      if (!mergedCategories.some(c => c.id === nc.id || c.name === nc.name)) {
-        mergedCategories.push(nc);
-      }
-    });
-
-    const mergedLinks = [...links, ...newLinks];
-    updateData(mergedLinks, mergedCategories);
+    importData(newLinks, newCategories);
     setIsImportModalOpen(false);
     alert(`成功导入 ${newLinks.length} 个新书签!`);
   };
 
   const handleAddLink = (data: Omit<LinkItem, 'id' | 'createdAt'>) => {
-    // 处理URL，确保有协议前缀
-    let processedUrl = data.url;
-    if (processedUrl && !processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
-      processedUrl = 'https://' + processedUrl;
-    }
-
-    // 获取当前分类下的所有链接（不包括置顶链接）
-    const categoryLinks = links.filter(link =>
-      !link.pinned && (data.categoryId === 'all' || link.categoryId === data.categoryId)
-    );
-
-    // 计算新链接的order值，使其排在分类最后
-    const maxOrder = categoryLinks.length > 0
-      ? Math.max(...categoryLinks.map(link => link.order || 0))
-      : -1;
-
-    const newLink: LinkItem = {
-      ...data,
-      url: processedUrl, // 使用处理后的URL
-      id: Date.now().toString(),
-      createdAt: Date.now(),
-      order: maxOrder + 1, // 设置为当前分类的最大order值+1，确保排在最后
-      // 如果是置顶链接，设置pinnedOrder为当前置顶链接数量
-      pinnedOrder: data.pinned ? links.filter(l => l.pinned).length : undefined
-    };
-
-    // 将新链接插入到合适的位置，而不是直接放在开头
-    // 如果是置顶链接，放在置顶链接区域的最后
-    if (newLink.pinned) {
-      const firstNonPinnedIndex = links.findIndex(link => !link.pinned);
-      if (firstNonPinnedIndex === -1) {
-        // 如果没有非置顶链接，直接添加到末尾
-        updateData([...links, newLink], categories);
-      } else {
-        // 插入到非置顶链接之前
-        const updatedLinks = [...links];
-        updatedLinks.splice(firstNonPinnedIndex, 0, newLink);
-        updateData(updatedLinks, categories);
-      }
-    } else {
-      // 非置顶链接，按照order字段排序后插入
-      const updatedLinks = [...links, newLink].sort((a, b) => {
-        // 置顶链接始终排在前面
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-
-        // 同类型链接按照order排序
-        const aOrder = a.order !== undefined ? a.order : a.createdAt;
-        const bOrder = b.order !== undefined ? b.order : b.createdAt;
-        return aOrder - bOrder;
-      });
-      updateData(updatedLinks, categories);
-    }
-
-    // Clear prefill if any
+    addLink(data);
     setPrefillLink(undefined);
   };
 
   const handleEditLink = (data: Omit<LinkItem, 'id' | 'createdAt'>) => {
     if (!editingLink) return;
-
-    // 处理URL，确保有协议前缀
-    let processedUrl = data.url;
-    if (processedUrl && !processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
-      processedUrl = 'https://' + processedUrl;
-    }
-
-    const updated = links.map(l => l.id === editingLink.id ? { ...l, ...data, url: processedUrl } : l);
-    updateData(updated, categories);
+    updateLink({ ...data, id: editingLink.id });
     setEditingLink(undefined);
   };
 
   // 拖拽结束事件处理函数
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
-      // 获取当前分类下的所有链接
-      const categoryLinks = links.filter(link =>
-        selectedCategory === 'all' || link.categoryId === selectedCategory
-      );
-
-      // 找到被拖拽元素和目标元素的索引
-      const activeIndex = categoryLinks.findIndex(link => link.id === active.id);
-      const overIndex = categoryLinks.findIndex(link => link.id === over.id);
-
-      if (activeIndex !== -1 && overIndex !== -1) {
-        // 重新排序当前分类的链接
-        const reorderedCategoryLinks = arrayMove(categoryLinks, activeIndex, overIndex);
-
-        // 更新所有链接的顺序
-        const updatedLinks = links.map(link => {
-          const reorderedIndex = reorderedCategoryLinks.findIndex(l => l.id === link.id);
-          if (reorderedIndex !== -1) {
-            return { ...link, order: reorderedIndex };
-          }
-          return link;
-        });
-
-        // 按照order字段重新排序
-        updatedLinks.sort((a, b) => (a.order || 0) - (b.order || 0));
-
-        updateData(updatedLinks, categories);
-      }
+      reorderLinks(active.id as string, over.id as string, selectedCategory);
     }
   };
 
   // 置顶链接拖拽结束事件处理函数
   const handlePinnedDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
-      // 获取所有置顶链接
-      const pinnedLinksList = links.filter(link => link.pinned);
-
-      // 找到被拖拽元素和目标元素的索引
-      const activeIndex = pinnedLinksList.findIndex(link => link.id === active.id);
-      const overIndex = pinnedLinksList.findIndex(link => link.id === over.id);
-
-      if (activeIndex !== -1 && overIndex !== -1) {
-        // 重新排序置顶链接
-        const reorderedPinnedLinks = arrayMove(pinnedLinksList, activeIndex, overIndex);
-
-        // 创建一个映射，存储每个置顶链接的新pinnedOrder
-        const pinnedOrderMap = new Map<string, number>();
-        reorderedPinnedLinks.forEach((link, index) => {
-          pinnedOrderMap.set(link.id, index);
-        });
-
-        // 只更新置顶链接的pinnedOrder，不改变任何链接的顺序
-        const updatedLinks = links.map(link => {
-          if (link.pinned) {
-            return {
-              ...link,
-              pinnedOrder: pinnedOrderMap.get(link.id)
-            };
-          }
-          return link;
-        });
-
-        // 按照pinnedOrder重新排序整个链接数组，确保置顶链接的顺序正确
-        // 同时保持非置顶链接的相对顺序不变
-        updatedLinks.sort((a, b) => {
-          // 如果都是置顶链接，按照pinnedOrder排序
-          if (a.pinned && b.pinned) {
-            return (a.pinnedOrder || 0) - (b.pinnedOrder || 0);
-          }
-          // 如果只有一个是置顶链接，置顶链接排在前面
-          if (a.pinned) return -1;
-          if (b.pinned) return 1;
-          // 如果都不是置顶链接，保持原位置不变（按照order或createdAt排序）
-          const aOrder = a.order !== undefined ? a.order : a.createdAt;
-          const bOrder = b.order !== undefined ? b.order : b.createdAt;
-          return bOrder - aOrder;
-        });
-
-        updateData(updatedLinks, categories);
-      }
+      reorderPinnedLinks(active.id as string, over.id as string);
     }
   };
 
@@ -843,32 +597,14 @@ function App() {
 
   const handleDeleteLink = (id: string) => {
     if (confirm('确定删除此链接吗?')) {
-      updateData(links.filter(l => l.id !== id), categories);
+      deleteLink(id);
     }
   };
 
   const togglePin = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    const linkToToggle = links.find(l => l.id === id);
-    if (!linkToToggle) return;
-
-    // 如果是设置为置顶，则设置pinnedOrder为当前置顶链接数量
-    // 如果是取消置顶，则清除pinnedOrder
-    const updated = links.map(l => {
-      if (l.id === id) {
-        const isPinned = !l.pinned;
-        return {
-          ...l,
-          pinned: isPinned,
-          pinnedOrder: isPinned ? links.filter(link => link.pinned).length : undefined
-        };
-      }
-      return l;
-    });
-
-    updateData(updated, categories);
+    togglePinStore(id);
   };
 
   const handleSaveAIConfig = async (config: AIConfig, newSiteSettings?: any) => {
@@ -898,27 +634,7 @@ function App() {
   };
 
   const handleDeleteCategory = (catId: string) => {
-    // 防止删除"常用推荐"分类
-    if (catId === 'common') {
-      alert('"常用推荐"分类不能被删除');
-      return;
-    }
-
-    let newCats = categories.filter(c => c.id !== catId);
-
-    // 检查是否存在"常用推荐"分类，如果不存在则创建它
-    if (!newCats.some(c => c.id === 'common')) {
-      newCats = [
-        { id: 'common', name: '常用推荐', icon: 'Star' },
-        ...newCats
-      ];
-    }
-
-    // Move links to common or first available
-    const targetId = 'common';
-    const newLinks = links.map(l => l.categoryId === catId ? { ...l, categoryId: targetId } : l);
-
-    updateData(newLinks, newCats);
+    deleteCategoryStore(catId);
   };
 
   // --- WebDAV Config ---
@@ -1098,172 +814,9 @@ function App() {
 
   // --- Render Components ---
 
-  // 创建可排序的链接卡片组件
-  const SortableLinkCard = ({ link }: { link: LinkItem }) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({ id: link.id });
 
-    // 根据视图模式决定卡片样式
-    const isDetailedView = siteSettings.cardStyle === 'detailed';
 
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition: isDragging ? 'none' : transition,
-      opacity: isDragging ? 0.5 : 1,
-      zIndex: isDragging ? 1000 : 'auto',
-    };
 
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        className={`group relative transition-all duration-300 cursor-grab active:cursor-grabbing min-w-0 max-w-full overflow-hidden backdrop-blur-md ${isSortingMode || isSortingPinned
-          ? 'bg-emerald-500/10 border-emerald-400/50'
-          : 'bg-slate-800/40 border border-white/5'
-          } ${isDragging ? 'shadow-2xl scale-[1.02]' : 'hover:-translate-y-1 hover:bg-slate-800/60 hover:border-emerald-500/30 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]'} ${isDetailedView
-            ? 'flex flex-col rounded-2xl p-4 min-h-[100px]'
-            : 'flex items-center rounded-xl p-3'
-          }`}
-        {...attributes}
-        {...listeners}
-      >
-        {/* 链接内容 - 移除a标签，改为div防止点击跳转 */}
-        <div className={`flex flex-1 min-w-0 overflow-hidden ${isDetailedView ? 'flex-col' : 'items-center gap-3'
-          }`}>
-          {/* 第一行：图标和标题水平排列 */}
-          <div className={`flex items-center gap-3 mb-2 ${isDetailedView ? '' : 'w-full'
-            }`}>
-            {/* Icon */}
-            <div className={`text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm font-bold uppercase shrink-0 ${isDetailedView ? 'w-8 h-8 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-700 dark:to-slate-800' : 'w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700'
-              }`}>
-              {link.icon ? <img src={link.icon} alt="" className="w-5 h-5" /> : link.title.charAt(0)}
-            </div>
-
-            {/* 标题 */}
-            <h3 className={`text-slate-900 dark:text-slate-100 truncate overflow-hidden text-ellipsis ${isDetailedView ? 'text-base' : 'text-sm font-medium text-slate-800 dark:text-slate-200'
-              }`} title={link.title}>
-              {link.title}
-            </h3>
-          </div>
-
-          {/* 第二行：描述文字 */}
-          {isDetailedView && link.description && (
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
-              {link.description}
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderLinkCard = (link: LinkItem) => {
-    const isSelected = selectedLinks.has(link.id);
-
-    // 根据视图模式决定卡片样式
-    const isDetailedView = siteSettings.cardStyle === 'detailed';
-
-    return (
-      <div
-        key={link.id}
-        className={`group relative transition-all duration-300 backdrop-blur-md ${isBatchEditMode ? '' : 'hover:-translate-y-1 hover:bg-slate-800/60 hover:border-emerald-500/30 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]'} ${isSelected
-          ? 'bg-rose-500/10 border-rose-400/50'
-          : 'bg-slate-800/40 border border-white/5'
-          } ${isBatchEditMode ? 'cursor-pointer' : ''} ${isDetailedView
-            ? 'flex flex-col rounded-2xl p-4 min-h-[100px]'
-            : 'flex items-center justify-between rounded-xl p-3'
-          }`}
-        onClick={() => isBatchEditMode && toggleLinkSelection(link.id)}
-        onContextMenu={(e) => handleContextMenu(e, link)}
-      >
-        {/* 链接内容 - 在批量编辑模式下不使用a标签 */}
-        {isBatchEditMode ? (
-          <div className={`flex flex-1 min-w-0 overflow-hidden h-full ${isDetailedView ? 'flex-col' : 'items-center'
-            }`}>
-            {/* 第一行：图标和标题水平排列 */}
-            <div className={`flex items-center gap-3 w-full`}>
-              {/* Icon */}
-              <div className={`text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm font-bold uppercase shrink-0 ${isDetailedView ? 'w-8 h-8 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-700 dark:to-slate-800' : 'w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700'
-                }`}>
-                {link.icon ? <img src={link.icon} alt="" className="w-5 h-5" /> : link.title.charAt(0)}
-              </div>
-
-              {/* 标题 */}
-              <h3 className={`text-slate-900 dark:text-slate-100 truncate overflow-hidden text-ellipsis ${isDetailedView ? 'text-base' : 'text-sm font-medium text-slate-800 dark:text-slate-200'
-                }`} title={link.title}>
-                {link.title}
-              </h3>
-            </div>
-
-            {/* 第二行：描述文字 */}
-            {isDetailedView && link.description && (
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
-                {link.description}
-              </p>
-            )}
-          </div>
-        ) : (
-          <a
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`flex flex-1 min-w-0 overflow-hidden h-full ${isDetailedView ? 'flex-col' : 'items-center'
-              }`}
-            title={isDetailedView ? link.url : (link.description || link.url)} // 详情版视图只显示URL作为tooltip
-          >
-            {/* 第一行：图标和标题水平排列 */}
-            <div className={`flex items-center gap-3 w-full`}>
-              {/* Icon */}
-              <div className={`text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm font-bold uppercase shrink-0 ${isDetailedView ? 'w-8 h-8 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-700 dark:to-slate-800' : 'w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700'
-                }`}>
-                {link.icon ? <img src={link.icon} alt="" className="w-5 h-5" /> : link.title.charAt(0)}
-              </div>
-
-              {/* 标题 */}
-              <h3 className={`text-slate-800 dark:text-slate-200 truncate whitespace-nowrap overflow-hidden text-ellipsis group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors ${isDetailedView ? 'text-base' : 'text-sm font-medium'
-                }`} title={link.title}>
-                {link.title}
-              </h3>
-            </div>
-
-            {/* 第二行：描述文字 */}
-            {isDetailedView && link.description && (
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
-                {link.description}
-              </p>
-            )}
-            {!isDetailedView && link.description && (
-              <div className="tooltip-custom absolute left-0 -top-8 w-max max-w-[200px] bg-black text-white text-xs p-2 rounded opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all z-20 pointer-events-none truncate">
-                {link.description}
-              </div>
-            )}
-          </a>
-        )}
-
-        {/* Hover Actions (Absolute Right) - 在批量编辑模式下隐藏 */}
-        {!isBatchEditMode && (
-          <div className={`flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-blue-50 dark:bg-blue-900/20 backdrop-blur-sm rounded-md p-1 absolute ${isDetailedView ? 'top-3 right-3' : 'top-1/2 -translate-y-1/2 right-2'
-            }`}>
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingLink(link); setIsModalOpen(true); }}
-              className="p-1 text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md"
-              title="编辑"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97c0-.33-.03-.65-.07-.97l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.08-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.32-.07.64-.07.97c0 .33.03.65.07.97l-2.11 1.63c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.39 1.06.73 1.69.98l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.25 1.17-.59 1.69-.98l2.49 1c.22.08.49 0 .61-.22l2-3.46c.13-.22.07-.49-.12-.64l-2.11-1.63Z" fill="currentColor" />
-              </svg>
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="flex h-screen overflow-hidden text-slate-900 dark:text-slate-50">
@@ -1428,8 +981,10 @@ function App() {
             onSelectAll={handleSelectAll}
             onBatchMove={handleBatchMove}
             onAddLink={() => { setEditingLink(undefined); setPrefillLink(undefined); setIsModalOpen(true); }}
-            renderLinkCard={renderLinkCard}
-            SortableLinkCard={SortableLinkCard}
+            selectedLinks={selectedLinks}
+            onLinkSelect={toggleLinkSelection}
+            onLinkContextMenu={handleContextMenu}
+            onLinkEdit={(link) => { setEditingLink(link); setIsModalOpen(true); }}
           />
         </div>
       </main>
