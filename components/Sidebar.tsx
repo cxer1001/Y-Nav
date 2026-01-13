@@ -201,29 +201,34 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer Actions */}
       {!isSidebarCollapsed && (
-        <div className="px-3 py-3 border-t border-slate-200/80 dark:border-white/10 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={onOpenImport}
-              className="flex-1 p-2 rounded-lg text-slate-400 hover:text-accent hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-colors"
-              title="导入书签"
-            >
-              <Upload size={14} className="mx-auto" />
-            </button>
-            <button
-              onClick={onOpenBackup}
-              className="flex-1 p-2 rounded-lg text-slate-400 hover:text-accent hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-colors"
-              title="备份与恢复"
-            >
-              <CloudCog size={14} className="mx-auto" />
-            </button>
-            <button
-              onClick={onOpenSettings}
-              className="flex-1 p-2 rounded-lg text-slate-400 hover:text-accent hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-colors"
-              title="AI 设置"
-            >
-              <Settings size={14} className="mx-auto" />
-            </button>
+        <div className="px-5 pb-5 shrink-0">
+          {/* Centered Divider */}
+          <div className="w-full h-px bg-slate-100 dark:bg-slate-800 mb-4 scale-95"></div>
+
+          <div className="flex flex-col gap-1.5 px-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 font-mono">
+                © 2026 Y-Nav
+              </span>
+              <span className="px-1.5 py-0.5 rounded-[4px] bg-slate-100 dark:bg-slate-800 text-[10px] font-medium text-slate-400 dark:text-slate-500 border border-slate-200/50 dark:border-white/5 font-mono">
+                v1.2.0
+              </span>
+            </div>
+
+            <p className="text-[10px] text-slate-300 dark:text-slate-600">
+              Personal Navigation Dashboard
+            </p>
+
+            {/* Hidden entry for advanced settings if needed later, or social links */}
+            <div className="mt-1 flex items-center gap-2 opacity-0 hover:opacity-100 transition-opacity duration-300">
+              <a href={repoUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-slate-400 hover:text-accent hover:underline cursor-pointer">
+                GitHub
+              </a>
+              <span className="text-[10px] text-slate-300">•</span>
+              <button onClick={onOpenSettings} className="text-[10px] text-slate-400 hover:text-accent hover:underline cursor-pointer">
+                关于
+              </button>
+            </div>
           </div>
         </div>
       )}

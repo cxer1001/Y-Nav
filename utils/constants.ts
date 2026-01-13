@@ -8,4 +8,4 @@ export const SITE_SETTINGS_KEY = 'cloudnav_site_settings';
 export const THEME_KEY = 'theme';
 
 // GitHub Repo URL
-export const GITHUB_REPO_URL = 'https://github.com/aabacada/CloudNav-abcd';
+export const GITHUB_REPO_URL = 'https://github.com/yml2213/Y-Nav';

@@ -37,12 +37,24 @@ const LinkCard: React.FC<LinkCardProps> = ({
         ${isDetailedView ? 'p-5' : 'p-3.5'}
     `;
 
+    const categoryColors: Record<string, string> = {
+        dev: 'bg-blue-100/50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400',
+        design: 'bg-purple-100/50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400',
+        read: 'bg-emerald-100/50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400',
+        ent: 'bg-rose-100/50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400',
+        ai: 'bg-indigo-100/50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400',
+        common: 'bg-amber-100/50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400',
+        default: 'bg-slate-100/50 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+    };
+
+    const colorClass = categoryColors[link.categoryId] || categoryColors.default;
+
     const iconContainerClasses = `
-        flex items-center justify-center shrink-0 rounded-xl overflow-hidden shadow-sm
-        transition-transform duration-300 group-hover:scale-105
+        flex items-center justify-center shrink-0 rounded-xl overflow-hidden shadow-sm transition-transform duration-300 group-hover:scale-105
+        ${colorClass}
         ${isDetailedView
-            ? 'w-12 h-12 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border border-slate-100/50 dark:border-white/5'
-            : 'w-9 h-9 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-white/5'
+            ? 'w-12 h-12 border border-black/5 dark:border-white/5'
+            : 'w-9 h-9 border border-black/5 dark:border-white/5'
         }
     `;
 
@@ -57,8 +69,8 @@ const LinkCard: React.FC<LinkCardProps> = ({
     const descriptionClasses = `
         leading-relaxed line-clamp-2 mt-2
         ${isDetailedView
-            ? 'text-sm text-slate-500 dark:text-slate-500'
-            : 'text-xs text-slate-400 dark:text-slate-500'
+            ? 'text-sm text-slate-500 dark:text-slate-400'
+            : 'text-xs text-slate-500 dark:text-slate-400'
         }
     `;
 

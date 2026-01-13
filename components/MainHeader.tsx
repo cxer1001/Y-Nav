@@ -127,12 +127,12 @@ const MainHeader: React.FC<MainHeaderProps> = ({
       )}
 
       <div className="flex items-center h-11 rounded-2xl border border-slate-200 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/50 shadow-sm hover:shadow-md transition-all duration-300 backdrop-blur-sm group-focus-within:ring-2 group-focus-within:ring-accent/20 group-focus-within:border-accent/50 group-focus-within:bg-white dark:group-focus-within:bg-slate-900">
-        <div className="flex items-center gap-2 px-3 border-r border-slate-200/60 dark:border-slate-700/60">
+        <div className="flex items-center gap-1 pl-1.5 py-1">
           <button
             onClick={() => onSearchModeChange('internal')}
-            className={`text-xs font-medium transition-all px-1.5 py-0.5 rounded ${searchMode === 'internal'
-              ? 'text-accent bg-accent/10'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${searchMode === 'internal'
+              ? 'bg-white dark:bg-slate-800 text-accent shadow-sm ring-1 ring-slate-200 dark:ring-slate-700'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
               }`}
             title="站内搜索"
           >
@@ -140,15 +140,18 @@ const MainHeader: React.FC<MainHeaderProps> = ({
           </button>
           <button
             onClick={() => onSearchModeChange('external')}
-            className={`text-xs font-medium transition-all px-1.5 py-0.5 rounded ${searchMode === 'external'
-              ? 'text-accent bg-accent/10'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${searchMode === 'external'
+              ? 'bg-white dark:bg-slate-800 text-accent shadow-sm ring-1 ring-slate-200 dark:ring-slate-700'
+              : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
               }`}
             title="站外搜索"
           >
             站外
           </button>
         </div>
+
+        {/* Vertical Separator */}
+        <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
 
         <div className="relative flex-1">
           <button
@@ -238,6 +241,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          {/* Mobile Search Toggle */}
           <button
             onClick={onToggleMobileSearch}
             className="md:hidden p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-accent/50"
@@ -246,36 +250,78 @@ const MainHeader: React.FC<MainHeaderProps> = ({
             <Search size={18} />
           </button>
 
-          {/* Sort Controls - Primary Actions */}
+          {/* View Mode Toggles (Desktop) */}
+          <div className="hidden md:flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5 mr-1">
+            <button
+              onClick={() => onViewModeChange('simple')}
+              className={`p-1.5 rounded-lg transition-all ${siteCardStyle === 'simple'
+                ? 'bg-white dark:bg-slate-700 text-accent shadow-sm'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+              title="简约视图"
+            >
+              <List size={14} />
+            </button>
+            <button
+              onClick={() => onViewModeChange('detailed')}
+              className={`p-1.5 rounded-lg transition-all ${siteCardStyle === 'detailed'
+                ? 'bg-white dark:bg-slate-700 text-accent shadow-sm'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+              title="详情视图"
+            >
+              <LayoutGrid size={14} />
+            </button>
+          </div>
+
+          {/* Sort Controls */}
           {showSortControls && (
             isSorting ? (
               <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30">
                 <span className="text-xs font-medium text-amber-600 dark:text-amber-400 mr-1">排序中</span>
                 <button
                   onClick={isSortingPinned ? onSavePinnedSorting : onSaveCategorySorting}
-                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-accent text-white hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-colors"
-                  title="保存顺序"
+                  className="p-1 rounded bg-accent text-white hover:bg-accent/90"
+                  title="保存"
                 >
-                  <Save size={12} /> 保存
+                  <Save size={14} />
                 </button>
                 <button
                   onClick={isSortingPinned ? onCancelPinnedSorting : onCancelCategorySorting}
-                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-slate-500 text-white hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500/50 transition-colors"
-                  title="取消排序"
+                  className="p-1 rounded bg-slate-500 text-white hover:bg-slate-600"
+                  title="取消"
                 >
-                  <X size={12} /> 取消
+                  <X size={14} />
                 </button>
               </div>
             ) : (
               <button
                 onClick={canSortPinned ? onStartPinnedSorting : onStartCategorySorting}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-slate-600 dark:text-slate-300 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 hover:text-accent hover:border-accent/30 hover:shadow-md transition-all duration-200 backdrop-blur-sm"
+                className="p-2 rounded-xl text-slate-500 hover:text-accent hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-200/50 dark:hover:border-white/5"
                 title={sortLabel}
               >
-                <GripVertical size={14} /> 排序
+                <GripVertical size={18} />
               </button>
             )
           )}
+
+          {/* Theme Toggle */}
+          <button
+            onClick={onToggleTheme}
+            className="p-2 rounded-xl text-slate-500 hover:text-accent hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-200/50 dark:hover:border-white/5"
+            title={themeMode === 'system' ? '跟随系统' : darkMode ? '切换亮色' : '切换深色'}
+          >
+            {themeMode === 'system' ? <Monitor size={18} /> : darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+
+          {/* Settings */}
+          <button
+            onClick={onOpenSettings}
+            className="p-2 rounded-xl text-slate-500 hover:text-accent hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-200/50 dark:hover:border-white/5 mr-1"
+            title="系统设置"
+          >
+            <Settings size={18} />
+          </button>
 
           {/* Add Link - Primary Action */}
           <button
@@ -283,69 +329,8 @@ const MainHeader: React.FC<MainHeaderProps> = ({
             className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-gradient-to-r from-accent to-accent/80 hover:from-accent hover:to-accent/90 text-white shadow-lg shadow-accent/20 hover:shadow-accent/30 active:scale-95 transition-all duration-200"
             title="添加链接"
           >
-            <span className="text-sm">+</span> 添加
+            <span className="text-lg leading-none">+</span> <span className="hidden sm:inline">添加</span>
           </button>
-
-          {/* More Menu - Secondary Actions */}
-          <div className="relative">
-            <button
-              onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-colors"
-              title="更多选项"
-            >
-              <MoreHorizontal size={18} />
-            </button>
-
-            {showMoreMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
-                <div className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200/60 dark:border-slate-700/60 py-1.5 z-50 overflow-hidden">
-                  {/* View Mode */}
-                  <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">视图模式</span>
-                    <div className="flex items-center gap-1 mt-2">
-                      <button
-                        onClick={() => { onViewModeChange('simple'); setShowMoreMenu(false); }}
-                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-md transition-all ${siteCardStyle === 'simple'
-                          ? 'bg-accent/15 text-accent'
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                          }`}
-                      >
-                        <List size={14} /> 简约
-                      </button>
-                      <button
-                        onClick={() => { onViewModeChange('detailed'); setShowMoreMenu(false); }}
-                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-md transition-all ${siteCardStyle === 'detailed'
-                          ? 'bg-accent/15 text-accent'
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                          }`}
-                      >
-                        <LayoutGrid size={14} /> 详情
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Theme */}
-                  <button
-                    onClick={() => { onToggleTheme(); setShowMoreMenu(false); }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    {themeMode === 'system' ? <Monitor size={16} /> : darkMode ? <Sun size={16} /> : <Moon size={16} />}
-                    <span>{themeMode === 'system' ? '跟随系统' : darkMode ? '暗色主题' : '亮色主题'}</span>
-                  </button>
-
-                  {/* Settings */}
-                  <button
-                    onClick={() => { onOpenSettings(); setShowMoreMenu(false); }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    <Settings size={16} />
-                    <span>设置</span>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
         </div>
       </div>
 
