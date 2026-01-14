@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { LinkItem, Category } from '../types';
+import { useDialog } from '../components/ui/DialogProvider';
 
 interface ContextMenuState {
     isOpen: boolean;
@@ -27,6 +28,7 @@ export function useContextMenu({
         position: { x: 0, y: 0 },
         link: null
     });
+    const { confirm } = useDialog();
 
     const handleContextMenu = useCallback((event: React.MouseEvent, link: LinkItem) => {
         event.preventDefault();
@@ -67,16 +69,24 @@ export function useContextMenu({
         closeContextMenu();
     }, [contextMenu.link, onEditLink, closeContextMenu]);
 
-    const deleteLinkFromContextMenu = useCallback(() => {
+    const deleteLinkFromContextMenu = useCallback(async () => {
         if (!contextMenu.link) return;
 
-        if (window.confirm(`确定要删除"${contextMenu.link.title}"吗？`)) {
+        const shouldDelete = await confirm({
+            title: '删除链接',
+            message: `确定要删除"${contextMenu.link.title}"吗？`,
+            confirmText: '删除',
+            cancelText: '取消',
+            variant: 'danger'
+        });
+
+        if (shouldDelete) {
             const newLinks = links.filter(link => link.id !== contextMenu.link!.id);
             updateData(newLinks, categories);
         }
 
         closeContextMenu();
-    }, [contextMenu.link, links, categories, updateData, closeContextMenu]);
+    }, [contextMenu.link, links, categories, updateData, closeContextMenu, confirm]);
 
     const togglePinFromContextMenu = useCallback(() => {
         if (!contextMenu.link) return;

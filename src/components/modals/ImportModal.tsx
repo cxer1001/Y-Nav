@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { X, Upload, FileText, ArrowRight, Check, AlertCircle, FolderInput, ListTree, Database } from 'lucide-react';
 import { Category, LinkItem, SearchConfig, AIConfig } from '../../types';
 import { parseBookmarks } from '../../services/bookmarkParser';
+import { useDialog } from '../ui/DialogProvider';
 
 interface ImportModalProps {
     isOpen: boolean;
@@ -24,6 +25,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
     onImportAIConfig,
     closeOnBackdrop = true
 }) => {
+    const { notify } = useDialog();
     const [step, setStep] = useState<'upload' | 'preview'>('upload');
     const [file, setFile] = useState<File | null>(null);
     const [analyzing, setAnalyzing] = useState(false);
@@ -134,7 +136,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
             const errorMessage = type === 'html'
                 ? "解析文件失败，请确保是标准的 Chrome HTML 书签文件。"
                 : "解析文件失败，请确保是有效的 Y-Nav 备份文件。";
-            alert(errorMessage);
+            notify(errorMessage, 'error');
             console.error(error);
         } finally {
             setAnalyzing(false);

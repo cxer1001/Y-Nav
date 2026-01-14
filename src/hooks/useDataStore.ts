@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { LinkItem, Category, DEFAULT_CATEGORIES, INITIAL_LINKS } from '../types';
 import { arrayMove } from '@dnd-kit/sortable';
 import { LOCAL_STORAGE_KEY, FAVICON_CACHE_KEY } from '../utils/constants';
+import { useDialog } from '../components/ui/DialogProvider';
 
 export const useDataStore = () => {
     const [links, setLinks] = useState<LinkItem[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
+    const { notify } = useDialog();
 
     // 加载本地图标缓存
     const loadLinkIcons = useCallback((linksToLoad: LinkItem[]) => {
@@ -141,7 +143,7 @@ export const useDataStore = () => {
             });
             updateData(updatedLinks, categories);
         }
-    }, [links, categories, updateData]);
+    }, [links, categories, updateData, notify]);
 
     const updateLink = useCallback((data: Omit<LinkItem, 'createdAt'>) => {
         let processedUrl = data.url;
@@ -250,7 +252,7 @@ export const useDataStore = () => {
 
     const deleteCategory = useCallback((catId: string) => {
         if (categories.length <= 1) {
-            alert('至少保留一个分类');
+            notify('至少保留一个分类', 'warning');
             return;
         }
         const newCats = categories.filter(c => c.id !== catId);

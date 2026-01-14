@@ -15,6 +15,7 @@ import Sidebar from './components/layout/Sidebar';
 import MainHeader from './components/layout/MainHeader';
 import LinkSections from './components/layout/LinkSections';
 import SyncStatusIndicator from './components/ui/SyncStatusIndicator';
+import { useDialog } from './components/ui/DialogProvider';
 
 import {
   useDataStore,
@@ -48,6 +49,7 @@ function App() {
     importData,
     isLoaded
   } = useDataStore();
+  const { notify, confirm } = useDialog();
 
   // === Sync Engine ===
   const [syncConflictOpen, setSyncConflictOpen] = useState(false);
@@ -291,7 +293,7 @@ function App() {
   const handleImportConfirm = (newLinks: LinkItem[], newCategories: Category[]) => {
     importData(newLinks, newCategories);
     setIsImportModalOpen(false);
-    alert(`成功导入 ${newLinks.length} 个新书签!`);
+    notify(`成功导入 ${newLinks.length} 个新书签!`, 'success');
   };
 
   const handleAddLink = (data: Omit<LinkItem, 'id' | 'createdAt'>) => {
@@ -305,8 +307,16 @@ function App() {
     setEditingLink(undefined);
   };
 
-  const handleDeleteLink = (id: string) => {
-    if (confirm('确定删除此链接吗?')) {
+  const handleDeleteLink = async (id: string) => {
+    const shouldDelete = await confirm({
+      title: '删除链接',
+      message: '确定删除此链接吗？',
+      confirmText: '删除',
+      cancelText: '取消',
+      variant: 'danger'
+    });
+
+    if (shouldDelete) {
       deleteLink(id);
     }
   };

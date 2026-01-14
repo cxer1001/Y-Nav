@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Sparkles, Loader2, CheckCircle, AlertCircle, Zap, Layers, List, Key, PauseCircle } from 'lucide-react';
 import { AIConfig, LinkItem } from '../../../types';
 import { generateLinkDescription, testAIConnection, fetchAvailableModels } from '../../../services/geminiService';
+import { useDialog } from '../../ui/DialogProvider';
 
 interface AITabProps {
     config: AIConfig;
@@ -16,6 +17,7 @@ const AITab: React.FC<AITabProps> = ({ config, onChange, links, onUpdateLinks })
     const [fetchingModels, setFetchingModels] = useState(false);
     const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [showModelList, setShowModelList] = useState(false);
+    const { notify, confirm } = useDialog();
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState({ current: 0, total: 0 });
@@ -46,10 +48,10 @@ const AITab: React.FC<AITabProps> = ({ config, onChange, links, onUpdateLinks })
                 setAvailableModels(models);
                 setShowModelList(true);
             } else {
-                alert("未找到可用模型，请检查配置或手动输入。");
+                notify("未找到可用模型，请检查配置或手动输入。", 'warning');
             }
         } catch (e) {
-            alert("获取模型列表失败");
+            notify("获取模型列表失败", 'error');
         } finally {
             setFetchingModels(false);
         }
@@ -57,17 +59,24 @@ const AITab: React.FC<AITabProps> = ({ config, onChange, links, onUpdateLinks })
 
     const handleBulkGenerate = async () => {
         if (!config.apiKey) {
-            alert("请先配置并保存 API Key");
+            notify("请先配置并保存 API Key", 'warning');
             return;
         }
 
         const missingLinks = links.filter(l => !l.description);
         if (missingLinks.length === 0) {
-            alert("所有链接都已有描述！");
+            notify("所有链接都已有描述！", 'info');
             return;
         }
 
-        if (!confirm(`发现 ${missingLinks.length} 个链接缺少描述，确定要使用 AI 自动生成吗？这可能需要一些时间。`)) return;
+        const shouldGenerate = await confirm({
+            title: '批量生成描述',
+            message: `发现 ${missingLinks.length} 个链接缺少描述，确定要使用 AI 自动生成吗？这可能需要一些时间。`,
+            confirmText: '开始生成',
+            cancelText: '取消'
+        });
+
+        if (!shouldGenerate) return;
 
         setIsProcessing(true);
         shouldStopRef.current = false;

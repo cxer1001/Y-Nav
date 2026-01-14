@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { LinkItem, Category } from '../types';
+import { useDialog } from '../components/ui/DialogProvider';
 
 interface UseBatchEditProps {
     links: LinkItem[];
@@ -11,6 +12,7 @@ interface UseBatchEditProps {
 export function useBatchEdit({ links, categories, displayedLinks, updateData }: UseBatchEditProps) {
     const [isBatchEditMode, setIsBatchEditMode] = useState(false);
     const [selectedLinks, setSelectedLinks] = useState<Set<string>>(new Set());
+    const { notify, confirm } = useDialog();
 
     const toggleBatchEditMode = useCallback(() => {
         setIsBatchEditMode(prev => !prev);
@@ -29,23 +31,31 @@ export function useBatchEdit({ links, categories, displayedLinks, updateData }: 
         });
     }, []);
 
-    const handleBatchDelete = useCallback(() => {
+    const handleBatchDelete = useCallback(async () => {
         if (selectedLinks.size === 0) {
-            alert('请先选择要删除的链接');
+            notify('请先选择要删除的链接', 'warning');
             return;
         }
 
-        if (confirm(`确定要删除选中的 ${selectedLinks.size} 个链接吗？`)) {
-            const newLinks = links.filter(link => !selectedLinks.has(link.id));
-            updateData(newLinks, categories);
-            setSelectedLinks(new Set());
-            setIsBatchEditMode(false);
-        }
-    }, [selectedLinks, links, categories, updateData]);
+        const shouldDelete = await confirm({
+            title: '删除链接',
+            message: `确定要删除选中的 ${selectedLinks.size} 个链接吗？`,
+            confirmText: '删除',
+            cancelText: '取消',
+            variant: 'danger'
+        });
+
+        if (!shouldDelete) return;
+
+        const newLinks = links.filter(link => !selectedLinks.has(link.id));
+        updateData(newLinks, categories);
+        setSelectedLinks(new Set());
+        setIsBatchEditMode(false);
+    }, [selectedLinks, links, categories, updateData, notify, confirm]);
 
     const handleBatchMove = useCallback((targetCategoryId: string) => {
         if (selectedLinks.size === 0) {
-            alert('请先选择要移动的链接');
+            notify('请先选择要移动的链接', 'warning');
             return;
         }
 
@@ -55,11 +65,11 @@ export function useBatchEdit({ links, categories, displayedLinks, updateData }: 
         updateData(newLinks, categories);
         setSelectedLinks(new Set());
         setIsBatchEditMode(false);
-    }, [selectedLinks, links, categories, updateData]);
+    }, [selectedLinks, links, categories, updateData, notify]);
 
     const handleBatchPin = useCallback(() => {
         if (selectedLinks.size === 0) {
-            alert('请先选择要置顶的链接');
+            notify('请先选择要置顶的链接', 'warning');
             return;
         }
 
@@ -80,7 +90,7 @@ export function useBatchEdit({ links, categories, displayedLinks, updateData }: 
         });
 
         if (orderMap.size === 0) {
-            alert('所选链接已置顶');
+            notify('所选链接已置顶', 'info');
             return;
         }
 
@@ -92,7 +102,7 @@ export function useBatchEdit({ links, categories, displayedLinks, updateData }: 
 
         updateData(newLinks, categories);
         setSelectedLinks(new Set());
-    }, [selectedLinks, links, categories, updateData, displayedLinks]);
+    }, [selectedLinks, links, categories, updateData, displayedLinks, notify]);
 
     const handleSelectAll = useCallback(() => {
         const currentLinkIds = displayedLinks.map(link => link.id);

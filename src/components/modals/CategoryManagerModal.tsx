@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, ArrowUp, ArrowDown, Trash2, Edit2, Plus, Check, Palette, Square, CheckSquare } from 'lucide-react';
 import { Category } from '../../types';
+import { useDialog } from '../ui/DialogProvider';
 import Icon from '../ui/Icon';
 import IconSelector from '../ui/IconSelector';
 
@@ -34,6 +35,7 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
   // 多选模式状态
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const { notify, confirm } = useDialog();
 
   if (!isOpen) return null;
 
@@ -74,23 +76,31 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
   };
 
   // 批量删除
-  const handleBatchDelete = () => {
+  const handleBatchDelete = async () => {
     if (selectedCategories.size === 0) {
-      alert('请先选择要删除的分类');
+      notify('请先选择要删除的分类', 'warning');
       return;
     }
 
     const fallbackCategory = getFallbackCategory(selectedCategories);
     if (!fallbackCategory) {
-      alert('至少保留一个分类');
+      notify('至少保留一个分类', 'warning');
       return;
     }
 
-    if (confirm(`确定删除选中的 ${selectedCategories.size} 个分类吗?这些分类下的书签将移动到"${fallbackCategory.name}"。`)) {
-      selectedCategories.forEach(id => onDeleteCategory(id));
-      setSelectedCategories(new Set());
-      setIsBatchMode(false);
-    }
+    const shouldDelete = await confirm({
+      title: '删除分类',
+      message: `确定删除选中的 ${selectedCategories.size} 个分类吗？这些分类下的书签将移动到"${fallbackCategory.name}"。`,
+      confirmText: '删除',
+      cancelText: '取消',
+      variant: 'danger'
+    });
+
+    if (!shouldDelete) return;
+
+    selectedCategories.forEach(id => onDeleteCategory(id));
+    setSelectedCategories(new Set());
+    setIsBatchMode(false);
   };
 
   const handleMove = (index: number, direction: 'up' | 'down') => {
@@ -107,10 +117,10 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
     startEdit(cat);
   };
 
-  const handleDeleteClick = (cat: Category) => {
+  const handleDeleteClick = async (cat: Category) => {
     const fallbackCategory = getFallbackCategory(new Set([cat.id]));
     if (!fallbackCategory) {
-      alert('至少保留一个分类');
+      notify('至少保留一个分类', 'warning');
       return;
     }
 
@@ -118,7 +128,15 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
       ? `确定删除默认分类"${cat.name}"吗？该分类下的书签将移动到"${fallbackCategory.name}"。`
       : `确定删除"${cat.name}"分类吗？该分类下的书签将移动到"${fallbackCategory.name}"。`;
 
-    if (confirm(prompt)) {
+    const shouldDelete = await confirm({
+      title: '删除分类',
+      message: prompt,
+      confirmText: '删除',
+      cancelText: '取消',
+      variant: 'danger'
+    });
+
+    if (shouldDelete) {
       onDeleteCategory(cat.id);
     }
   };

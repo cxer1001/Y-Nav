@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, Loader2, Pin, Wand2, Trash2, Upload } from 'lucide-react';
 import { LinkItem, Category, AIConfig } from '../../types';
 import { generateLinkDescription, suggestCategory } from '../../services/geminiService';
+import { useDialog } from '../ui/DialogProvider';
 
 const FAVICON_CACHE_KEY = 'ynav_favicon_cache';
 
@@ -40,6 +41,7 @@ const LinkModal: React.FC<LinkModalProps> = ({
   const [batchMode, setBatchMode] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { notify } = useDialog();
 
   // 当模态框关闭时，重置批量模式为默认关闭状态
   useEffect(() => {
@@ -162,7 +164,7 @@ const LinkModal: React.FC<LinkModalProps> = ({
   const handleAIAssist = async () => {
     if (!url || !title) return;
     if (!aiConfig.apiKey) {
-      alert("请先点击侧边栏左下角设置图标配置 AI API Key");
+      notify("请先点击侧边栏左下角设置图标配置 AI API Key", 'warning');
       return;
     }
 
@@ -229,7 +231,7 @@ const LinkModal: React.FC<LinkModalProps> = ({
       }
     } catch (e) {
       console.error("Failed to fetch icon", e);
-      alert("无法获取图标，请检查URL是否正确");
+      notify("无法获取图标，请检查URL是否正确", 'error');
     } finally {
       setIsFetchingIcon(false);
     }
@@ -243,13 +245,13 @@ const LinkModal: React.FC<LinkModalProps> = ({
     // 验证文件类型
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon'];
     if (!validTypes.includes(file.type)) {
-      alert('请上传 PNG、JPG、SVG 或 ICO 格式的图标');
+      notify('请上传 PNG、JPG、SVG 或 ICO 格式的图标', 'warning');
       return;
     }
 
     // 验证文件大小 (限制为 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      alert('图标文件大小不能超过 2MB');
+      notify('图标文件大小不能超过 2MB', 'warning');
       return;
     }
 
@@ -278,7 +280,7 @@ const LinkModal: React.FC<LinkModalProps> = ({
     };
 
     reader.onerror = () => {
-      alert('读取图标文件失败');
+      notify('读取图标文件失败', 'error');
       setIsFetchingIcon(false);
     };
 

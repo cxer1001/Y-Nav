@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Globe, Upload, RefreshCw } from 'lucide-react';
 import { SiteSettings } from '../../../types';
+import { useDialog } from '../../ui/DialogProvider';
 
 interface SiteTabProps {
     settings: SiteSettings;
@@ -50,6 +51,7 @@ const SiteTab: React.FC<SiteTabProps> = ({ settings, onChange }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [generatedIcons, setGeneratedIcons] = useState<string[]>([]);
     const closeOnBackdrop = !!settings.closeOnBackdrop;
+    const { notify } = useDialog();
 
     const updateGeneratedIcons = (text: string) => {
         const newIcons: string[] = [];
@@ -75,7 +77,7 @@ const SiteTab: React.FC<SiteTabProps> = ({ settings, onChange }) => {
 
         // Validate size (2MB)
         if (file.size > 2 * 1024 * 1024) {
-            alert('图标文件大小不能超过 2MB');
+            notify('图标文件大小不能超过 2MB', 'warning');
             return;
         }
 

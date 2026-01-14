@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Globe, Search, GripVertical, Check, RotateCcw, AlertCircle } from 'lucide-react';
 import { ExternalSearchSource } from '../../types';
+import { useDialog } from '../ui/DialogProvider';
 import {
   DndContext,
   closestCenter,
@@ -146,6 +147,7 @@ const SearchConfigModal: React.FC<SearchConfigModalProps> = ({
   const [localSources, setLocalSources] = useState<ExternalSearchSource[]>(sources);
   const [newSource, setNewSource] = useState({ name: '', url: '' });
   const [isAdding, setIsAdding] = useState(false);
+  const { confirm } = useDialog();
 
   // DnD Sensors
   const sensors = useSensors(
@@ -192,8 +194,16 @@ const SearchConfigModal: React.FC<SearchConfigModalProps> = ({
     setIsAdding(false);
   };
 
-  const handleDeleteSource = (id: string) => {
-    if (confirm('确定要删除这个搜索源吗？')) {
+  const handleDeleteSource = async (id: string) => {
+    const shouldDelete = await confirm({
+      title: '删除搜索源',
+      message: '确定要删除这个搜索源吗？',
+      confirmText: '删除',
+      cancelText: '取消',
+      variant: 'danger'
+    });
+
+    if (shouldDelete) {
       setLocalSources(localSources.filter(source => source.id !== id));
     }
   };
@@ -209,22 +219,30 @@ const SearchConfigModal: React.FC<SearchConfigModalProps> = ({
     onClose();
   };
 
-  const handleReset = () => {
-    if (confirm('确定要重置为默认搜索源列表吗？自定义的搜索源将丢失。')) {
-      const defaultSources: ExternalSearchSource[] = [
-        { id: 'bing', name: '必应', url: 'https://www.bing.com/search?q={query}', icon: 'Search', enabled: true, createdAt: Date.now() },
-        { id: 'google', name: 'Google', url: 'https://www.google.com/search?q={query}', icon: 'Search', enabled: true, createdAt: Date.now() },
-        { id: 'baidu', name: '百度', url: 'https://www.baidu.com/s?wd={query}', icon: 'Globe', enabled: true, createdAt: Date.now() },
-        { id: 'sogou', name: '搜狗', url: 'https://www.sogou.com/web?query={query}', icon: 'Globe', enabled: true, createdAt: Date.now() },
-        { id: 'yandex', name: 'Yandex', url: 'https://yandex.com/search/?text={query}', icon: 'Globe', enabled: true, createdAt: Date.now() },
-        { id: 'github', name: 'GitHub', url: 'https://github.com/search?q={query}', icon: 'Github', enabled: true, createdAt: Date.now() },
-        { id: 'linuxdo', name: 'Linux.do', url: 'https://linux.do/search?q={query}', icon: 'Terminal', enabled: true, createdAt: Date.now() },
-        { id: 'bilibili', name: 'B站', url: 'https://search.bilibili.com/all?keyword={query}', icon: 'Play', enabled: true, createdAt: Date.now() },
-        { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/results?search_query={query}', icon: 'Video', enabled: true, createdAt: Date.now() },
-        { id: 'wikipedia', name: '维基', url: 'https://zh.wikipedia.org/wiki/Special:Search?search={query}', icon: 'BookOpen', enabled: true, createdAt: Date.now() }
-      ];
-      setLocalSources(defaultSources);
-    }
+  const handleReset = async () => {
+    const shouldReset = await confirm({
+      title: '重置搜索源',
+      message: '确定要重置为默认搜索源列表吗？自定义的搜索源将丢失。',
+      confirmText: '重置',
+      cancelText: '取消',
+      variant: 'danger'
+    });
+
+    if (!shouldReset) return;
+
+    const defaultSources: ExternalSearchSource[] = [
+      { id: 'bing', name: '必应', url: 'https://www.bing.com/search?q={query}', icon: 'Search', enabled: true, createdAt: Date.now() },
+      { id: 'google', name: 'Google', url: 'https://www.google.com/search?q={query}', icon: 'Search', enabled: true, createdAt: Date.now() },
+      { id: 'baidu', name: '百度', url: 'https://www.baidu.com/s?wd={query}', icon: 'Globe', enabled: true, createdAt: Date.now() },
+      { id: 'sogou', name: '搜狗', url: 'https://www.sogou.com/web?query={query}', icon: 'Globe', enabled: true, createdAt: Date.now() },
+      { id: 'yandex', name: 'Yandex', url: 'https://yandex.com/search/?text={query}', icon: 'Globe', enabled: true, createdAt: Date.now() },
+      { id: 'github', name: 'GitHub', url: 'https://github.com/search?q={query}', icon: 'Github', enabled: true, createdAt: Date.now() },
+      { id: 'linuxdo', name: 'Linux.do', url: 'https://linux.do/search?q={query}', icon: 'Terminal', enabled: true, createdAt: Date.now() },
+      { id: 'bilibili', name: 'B站', url: 'https://search.bilibili.com/all?keyword={query}', icon: 'Play', enabled: true, createdAt: Date.now() },
+      { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/results?search_query={query}', icon: 'Video', enabled: true, createdAt: Date.now() },
+      { id: 'wikipedia', name: '维基', url: 'https://zh.wikipedia.org/wiki/Special:Search?search={query}', icon: 'BookOpen', enabled: true, createdAt: Date.now() }
+    ];
+    setLocalSources(defaultSources);
   };
 
   if (!isOpen) return null;
