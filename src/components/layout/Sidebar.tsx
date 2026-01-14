@@ -251,40 +251,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Footer Actions */}
+      {/* Footer Actions - Removed to avoid duplication with main footer */}
       {!isSidebarCollapsed && (
-        <div className="px-3 pb-6 shrink-0 flex justify-center">
-          <div className="w-full">
-            <div className="w-full h-px bg-slate-100 dark:bg-slate-800 mb-4"></div>
-
-            <div className="flex justify-center">
-              <div className="flex flex-col gap-2 w-fit">
-                {/* Footer Links - Visible by default now */}
-                <div className="flex items-center gap-3 justify-center mb-2 px-2 py-1 round-lg bg-slate-50/50 dark:bg-white/5 backdrop-blur-sm border border-slate-100 dark:border-white/5 rounded-full">
-                  <a href={repoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-accent font-medium transition-colors">
-                    GitHub
-                  </a>
-                  <span className="text-[10px] text-slate-300 dark:text-slate-600">|</span>
-                  <button onClick={onOpenSettings} className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-accent font-medium transition-colors">
-                    关于
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400 font-mono tracking-tight">
-                    © 2026 Y-Nav
-                  </span>
-                  <span className="px-1.5 py-[2px] rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-white/5 font-mono ml-4">
-                    v{__APP_VERSION__}
-                  </span>
-                </div>
-
-                <p className="text-[11px] font-medium text-slate-300 dark:text-slate-600 leading-none text-center">
-                  Personal Navigation Dashboard
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="px-3 pb-4 mt-auto">
+          {/* Only keep a minimal separator if needed, or nothing */}
         </div>
       )}
     </aside>

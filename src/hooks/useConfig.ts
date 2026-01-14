@@ -10,8 +10,8 @@ const DEFAULT_AI_CONFIG: AIConfig = {
 };
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
-    title: 'CloudNav - 我的导航',
-    navTitle: 'CloudNav',
+    title: 'Y-Nav - 我的导航',
+    navTitle: 'Y-Nav',
     favicon: '',
     cardStyle: 'detailed'
 };
@@ -88,7 +88,7 @@ export function useConfig() {
     }, [siteSettings.title, siteSettings.favicon]);
 
     // Derived values
-    const navTitleText = siteSettings.navTitle || 'CloudNav';
+    const navTitleText = siteSettings.navTitle || 'Y-Nav';
     const navTitleShort = navTitleText.slice(0, 2);
 
     return {

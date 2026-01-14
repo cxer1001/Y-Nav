@@ -1,5 +1,9 @@
 {
   "name": "Y-Nav",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yml2213/Y-Nav.git"
+  },
   "private": true,
   "version": "1.8.0",
   "type": "module",

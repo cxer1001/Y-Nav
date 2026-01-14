@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, lazy, Suspense, useState, useCallback, useRef } from 'react';
-import { LinkItem, Category, SyncConflict, CloudNavSyncData } from './types';
+import { LinkItem, Category, SyncConflict, YNavSyncData } from './types';
 
 // Lazy load modal components for better code splitting
 const LinkModal = lazy(() => import('./components/modals/LinkModal'));
@@ -88,7 +88,7 @@ function App() {
     setSyncConflictOpen(true);
   }, []);
 
-  const handleSyncComplete = useCallback((data: CloudNavSyncData) => {
+  const handleSyncComplete = useCallback((data: YNavSyncData) => {
     // 当从云端恢复数据时更新本地数据
     if (data.links && data.categories) {
       updateData(data.links, data.categories);
@@ -366,7 +366,7 @@ function App() {
 
       if (cloudData && cloudData.links && cloudData.categories) {
         // 比较版本，如果云端数据较新，弹出冲突对话框
-        const localMeta = localStorage.getItem('cloudnav_sync_meta');
+        const localMeta = localStorage.getItem('ynav_sync_meta');
         const localVersion = localMeta ? JSON.parse(localMeta).version : 0;
 
         if (cloudData.meta.version > localVersion) {

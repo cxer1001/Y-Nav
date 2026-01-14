@@ -1,5 +1,5 @@
 /**
- * useSyncEngine - CloudNav KV 同步引擎
+ * useSyncEngine - Y-Nav KV 同步引擎
  * 
  * 功能:
  *   - 页面加载时检测云端数据并处理冲突
@@ -10,7 +10,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
-    CloudNavSyncData,
+    YNavSyncData,
     SyncStatus,
     SyncConflict,
     SyncMetadata,
@@ -30,7 +30,7 @@ import {
 // 同步引擎配置
 interface UseSyncEngineOptions {
     onConflict?: (conflict: SyncConflict) => void;
-    onSyncComplete?: (data: CloudNavSyncData) => void;
+    onSyncComplete?: (data: YNavSyncData) => void;
     onError?: (error: string) => void;
 }
 
@@ -41,10 +41,10 @@ interface UseSyncEngineReturn {
     lastSyncTime: number | null;
 
     // 操作
-    pullFromCloud: () => Promise<CloudNavSyncData | null>;
-    pushToCloud: (data: Omit<CloudNavSyncData, 'meta'>, force?: boolean) => Promise<boolean>;
-    schedulePush: (data: Omit<CloudNavSyncData, 'meta'>) => void;
-    createBackup: (data: Omit<CloudNavSyncData, 'meta'>) => Promise<boolean>;
+    pullFromCloud: () => Promise<YNavSyncData | null>;
+    pushToCloud: (data: Omit<YNavSyncData, 'meta'>, force?: boolean) => Promise<boolean>;
+    schedulePush: (data: Omit<YNavSyncData, 'meta'>) => void;
+    createBackup: (data: Omit<YNavSyncData, 'meta'>) => Promise<boolean>;
 
     // 冲突解决
     resolveConflict: (choice: 'local' | 'remote') => void;
@@ -79,10 +79,10 @@ export function useSyncEngine(options: UseSyncEngineOptions = {}): UseSyncEngine
 
     // Refs for debounce
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-    const pendingData = useRef<Omit<CloudNavSyncData, 'meta'> | null>(null);
+    const pendingData = useRef<Omit<YNavSyncData, 'meta'> | null>(null);
 
     // 从云端拉取数据
-    const pullFromCloud = useCallback(async (): Promise<CloudNavSyncData | null> => {
+    const pullFromCloud = useCallback(async (): Promise<YNavSyncData | null> => {
         setSyncStatus('syncing');
 
         try {
@@ -117,7 +117,7 @@ export function useSyncEngine(options: UseSyncEngineOptions = {}): UseSyncEngine
 
     // 推送数据到云端
     const pushToCloud = useCallback(async (
-        data: Omit<CloudNavSyncData, 'meta'>,
+        data: Omit<YNavSyncData, 'meta'>,
         force: boolean = false
     ): Promise<boolean> => {
         setSyncStatus('syncing');
@@ -126,7 +126,7 @@ export function useSyncEngine(options: UseSyncEngineOptions = {}): UseSyncEngine
         const deviceId = getDeviceId();
 
         // 构建完整的同步数据
-        const syncData: CloudNavSyncData = {
+        const syncData: YNavSyncData = {
             ...data,
             meta: {
                 updatedAt: Date.now(),
@@ -182,7 +182,7 @@ export function useSyncEngine(options: UseSyncEngineOptions = {}): UseSyncEngine
     }, [onConflict, onSyncComplete, onError]);
 
     // 带 debounce 的推送调度
-    const schedulePush = useCallback((data: Omit<CloudNavSyncData, 'meta'>) => {
+    const schedulePush = useCallback((data: Omit<YNavSyncData, 'meta'>) => {
         // 存储待推送数据
         pendingData.current = data;
         setSyncStatus('pending');
@@ -213,12 +213,12 @@ export function useSyncEngine(options: UseSyncEngineOptions = {}): UseSyncEngine
 
     // 创建备份
     const createBackup = useCallback(async (
-        data: Omit<CloudNavSyncData, 'meta'>
+        data: Omit<YNavSyncData, 'meta'>
     ): Promise<boolean> => {
         setSyncStatus('syncing');
 
         const deviceId = getDeviceId();
-        const syncData: CloudNavSyncData = {
+        const syncData: YNavSyncData = {
             ...data,
             meta: {
                 updatedAt: Date.now(),
@@ -298,7 +298,7 @@ export function buildSyncData(
     searchConfig?: SearchConfig,
     aiConfig?: AIConfig,
     siteSettings?: SiteSettings
-): Omit<CloudNavSyncData, 'meta'> {
+): Omit<YNavSyncData, 'meta'> {
     return {
         links,
         categories,

@@ -104,8 +104,8 @@ export interface SyncMetadata {
   version: number;        // 数据版本号（递增，防止并发冲突）
 }
 
-// KV 存储的完整数据结构
-export interface CloudNavSyncData {
+// Main sync data structure
+export interface YNavSyncData {
   links: LinkItem[];
   categories: Category[];
   searchConfig?: SearchConfig;
@@ -116,8 +116,8 @@ export interface CloudNavSyncData {
 
 // 同步冲突信息
 export interface SyncConflict {
-  localData: CloudNavSyncData;
-  remoteData: CloudNavSyncData;
+  localData: YNavSyncData;
+  remoteData: YNavSyncData;
 }
 
 // 同步状态枚举
@@ -125,8 +125,4 @@ export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'pending' | 'error' | '
 
 // 同步 API 响应
 export interface SyncApiResponse {
-  success: boolean;
-  data?: CloudNavSyncData;
-  error?: string;
-  conflict?: boolean;
 }

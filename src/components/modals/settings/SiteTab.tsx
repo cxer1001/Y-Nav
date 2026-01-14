@@ -64,7 +64,7 @@ const SiteTab: React.FC<SiteTabProps> = ({ settings, onChange }) => {
     // Initial generation
     useEffect(() => {
         if (generatedIcons.length === 0) {
-            updateGeneratedIcons(settings.title || 'CloudNav');
+            updateGeneratedIcons(settings.title || 'Y-Nav');
         }
     }, []);
 

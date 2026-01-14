@@ -23,7 +23,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [activeTab, setActiveTab] = useState<'site' | 'ai' | 'appearance' | 'data'>('site');
   const [localConfig, setLocalConfig] = useState<AIConfig>(config);
   const [localSiteSettings, setLocalSiteSettings] = useState<SiteSettings>(() => ({
-    title: siteSettings?.title || 'CloudNav - 我的导航',
+    title: siteSettings?.title || 'Y-Nav - 我的导航',
     favicon: siteSettings?.favicon || '',
     cardStyle: siteSettings?.cardStyle || 'detailed',
     accentColor: siteSettings?.accentColor || '99 102 241',
@@ -34,7 +34,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     if (isOpen) {
       setLocalConfig(config);
       setLocalSiteSettings({
-        title: siteSettings?.title || 'CloudNav - 我的导航',
+        title: siteSettings?.title || 'Y-Nav - 我的导航',
         favicon: siteSettings?.favicon || '',
         cardStyle: siteSettings?.cardStyle || 'detailed',
         accentColor: siteSettings?.accentColor || '99 102 241',

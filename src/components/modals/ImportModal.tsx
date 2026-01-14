@@ -131,7 +131,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
         } catch (error) {
             const errorMessage = type === 'html'
                 ? "解析文件失败，请确保是标准的 Chrome HTML 书签文件。"
-                : "解析文件失败，请确保是有效的 cloudnav_backup.json 文件。";
+                : "解析文件失败，请确保是有效的 Y-Nav 备份文件。";
             alert(errorMessage);
             console.error(error);
         } finally {
@@ -280,8 +280,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
                                             <Database size={32} />
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-sm font-medium dark:text-white">导入 cloudnav_backup.json 文件</p>
-                                            <p className="text-xs text-slate-500 mt-1">CloudNav 标准备份格式，便于数据迁移</p>
+                                            <p className="text-sm font-medium dark:text-white">导入 ynav_backup.json 文件</p>
+                                            <p className="text-xs text-slate-500 mt-1">Y-Nav 标准备份格式，便于数据迁移</p>
                                         </div>
                                     </>
                                 )}
