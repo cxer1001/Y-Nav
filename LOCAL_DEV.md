@@ -10,26 +10,24 @@ npm run dev
 
 ---
 
-## 🔐 本地开发认证说明
+## ☁️ 本地开发与云同步
 
-### ✨ 自动本地模式
+### 本地开发模式
 
-当你在 `localhost` 或 `127.0.0.1` 访问应用时,会**自动启用本地开发模式**:
+当你在 `localhost` 访问应用时:
 
-1. **首次访问**
-   - 系统会提示你输入密码
-   - 输入任意密码(如: `test123`)
-   - 密码仅用于标识,不会验证服务器
+- ✅ 所有数据保存在浏览器 LocalStorage
+- ✅ KV 同步 API 不可用（需要 Cloudflare 环境）
+- ✅ 右下角同步指示器显示"同步失败"是正常的
 
-2. **本地开发模式特性**
-   - ✅ 跳过 Cloudflare Functions API 调用
-   - ✅ 所有数据保存在浏览器 LocalStorage
-   - ✅ 无需配置服务器或 KV 存储
-   - ✅ 完整的功能测试体验
+### 使用 Wrangler 测试完整同步
 
-3. **状态显示**
-   - 右上角会显示 "离线" 状态
-   - 控制台会打印: `🔧 本地开发模式:跳过服务器认证`
+```bash
+npm run build
+wrangler pages dev dist --kv CLOUDNAV_KV
+```
+
+这将在 `http://localhost:8788` 启动带有完整 KV 同步功能的服务。
 
 ---
 
@@ -80,10 +78,8 @@ npm run dev
    npx wrangler kv:namespace create "CLOUDNAV_KV"
    ```
 
-3. **配置环境变量**
-   - 进入 Cloudflare Pages 控制台
-   - 设置环境变量:
-     - `PASSWORD`: 你的访问密码
+3. **绑定 KV 命名空间**
+   - 进入 Cloudflare Pages 控制台 -> Settings -> Functions
    - 绑定 KV 命名空间:
      - 变量名: `CLOUDNAV_KV`
      - 命名空间: 选择刚创建的 KV
@@ -124,10 +120,6 @@ location.reload();
 ---
 
 ## 🐛 常见问题
-
-### Q: 为什么我看到 "密码错误或无法连接服务器"?
-
-**A**: 这是正常的!首次访问时会尝试连接 API,失败后会自动切换到本地模式。只需输入任意密码继续。
 
 ---
 

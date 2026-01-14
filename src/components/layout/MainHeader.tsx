@@ -19,7 +19,7 @@ interface MainHeaderProps {
   isSortingPinned: boolean;
   isSortingCategory: boolean;
   onOpenSidebar: () => void;
-  onToggleTheme: () => void;
+  onSetTheme: (mode: 'light' | 'dark' | 'system') => void;
   onViewModeChange: (mode: 'simple' | 'detailed') => void;
   onSearchModeChange: (mode: SearchMode) => void;
   onOpenSearchConfig: () => void;
@@ -58,7 +58,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({
   isSortingPinned,
   isSortingCategory,
   onOpenSidebar,
-  onToggleTheme,
+  onSetTheme,
   onViewModeChange,
   onSearchModeChange,
   onOpenSearchConfig,
@@ -85,6 +85,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({
 
   // More menu dropdown state
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -325,14 +326,57 @@ const MainHeader: React.FC<MainHeaderProps> = ({
           {/* Theme Toggle */}
           {/* Settings Group */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-white/50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50 mr-2 backdrop-blur-sm">
-            {/* Theme Toggle */}
-            <button
-              onClick={onToggleTheme}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-accent hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
-              title={themeMode === 'system' ? '跟随系统' : darkMode ? '切换亮色' : '切换深色'}
-            >
-              {themeMode === 'system' ? <Monitor size={16} /> : darkMode ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
+            {/* Theme Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowThemeMenu(!showThemeMenu)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-accent hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                title="切换主题"
+              >
+                {themeMode === 'system' ? <Monitor size={16} /> : darkMode ? <Moon size={16} /> : <Sun size={16} />}
+              </button>
+
+              {showThemeMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowThemeMenu(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-2 w-36 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <button
+                      onClick={() => { onSetTheme('light'); setShowThemeMenu(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${themeMode === 'light'
+                        ? 'bg-accent/10 text-accent font-medium'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                        }`}
+                    >
+                      <Sun size={16} />
+                      <span>浅色模式</span>
+                    </button>
+                    <button
+                      onClick={() => { onSetTheme('dark'); setShowThemeMenu(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${themeMode === 'dark'
+                        ? 'bg-accent/10 text-accent font-medium'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                        }`}
+                    >
+                      <Moon size={16} />
+                      <span>深色模式</span>
+                    </button>
+                    <button
+                      onClick={() => { onSetTheme('system'); setShowThemeMenu(false); }}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${themeMode === 'system'
+                        ? 'bg-accent/10 text-accent font-medium'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                        }`}
+                    >
+                      <Monitor size={16} />
+                      <span>跟随系统</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Settings Toggle */}
             <button

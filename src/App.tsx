@@ -55,7 +55,7 @@ function App() {
   const hasInitialSyncRun = useRef(false);
 
   // === Theme ===
-  const { themeMode, darkMode, toggleTheme } = useTheme();
+  const { themeMode, darkMode, setThemeAndApply } = useTheme();
 
   // === Sidebar ===
   const {
@@ -584,7 +584,7 @@ function App() {
             isSortingPinned={isSortingPinned}
             isSortingCategory={isSortingCategory}
             onOpenSidebar={openSidebar}
-            onToggleTheme={toggleTheme}
+            onSetTheme={setThemeAndApply}
             onViewModeChange={handleViewModeChange}
             onSearchModeChange={handleSearchModeChange}
             onOpenSearchConfig={() => setIsSearchConfigModalOpen(true)}
