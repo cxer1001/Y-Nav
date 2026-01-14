@@ -177,9 +177,14 @@ export const useDataStore = () => {
     const reorderLinks = useCallback((activeId: string, overId: string, selectedCategory: string) => {
         if (activeId === overId) return;
 
-        const categoryLinks = links.filter(link =>
-            selectedCategory === 'all' || link.categoryId === selectedCategory
+        const getOrderValue = (link: LinkItem) => (
+            link.order !== undefined ? link.order : link.createdAt
         );
+
+        const categoryLinks = links
+            .filter(link => selectedCategory === 'all' || link.categoryId === selectedCategory)
+            .slice()
+            .sort((a, b) => getOrderValue(a) - getOrderValue(b));
 
         const activeIndex = categoryLinks.findIndex(link => link.id === activeId);
         const overIndex = categoryLinks.findIndex(link => link.id === overId);
@@ -193,7 +198,7 @@ export const useDataStore = () => {
                 }
                 return link;
             });
-            updatedLinks.sort((a, b) => (a.order || 0) - (b.order || 0));
+            updatedLinks.sort((a, b) => getOrderValue(a) - getOrderValue(b));
             updateData(updatedLinks, categories);
         }
     }, [links, categories, updateData]);
@@ -201,7 +206,17 @@ export const useDataStore = () => {
     const reorderPinnedLinks = useCallback((activeId: string, overId: string) => {
         if (activeId === overId) return;
 
-        const pinnedLinksList = links.filter(link => link.pinned);
+        const pinnedLinksList = links
+            .filter(link => link.pinned)
+            .slice()
+            .sort((a, b) => {
+                if (a.pinnedOrder !== undefined && b.pinnedOrder !== undefined) {
+                    return a.pinnedOrder - b.pinnedOrder;
+                }
+                if (a.pinnedOrder !== undefined) return -1;
+                if (b.pinnedOrder !== undefined) return 1;
+                return a.createdAt - b.createdAt;
+            });
         const activeIndex = pinnedLinksList.findIndex(link => link.id === activeId);
         const overIndex = pinnedLinksList.findIndex(link => link.id === overId);
 
