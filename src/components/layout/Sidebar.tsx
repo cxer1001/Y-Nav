@@ -275,7 +275,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     © 2026 Y-Nav
                   </span>
                   <span className="px-1.5 py-[2px] rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-bold text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-white/5 font-mono ml-4">
-                    v1.2.0
+                    v{__APP_VERSION__}
                   </span>
                 </div>
 
