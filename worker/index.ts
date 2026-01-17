@@ -1,6 +1,6 @@
 /**
- * Y-Nav Cloudflare Worker 入口
- * 
+* Y-Nav Cloudflare Worker 入口* Y-Nav Cloudflare Worker 入口
+*
  * 功能:
  * 1. 托管静态资源 (SPA)
  * 2. 处理 /api/sync 相关请求
@@ -62,10 +62,10 @@ const BACKUP_TTL_SECONDS = 30 * 24 * 60 * 60;
 // ============================================
 
 const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Sync-Password',
-};
+'Access-Control-Allow-Origin'：'*'、
+'Access-Control-Allow-Methods'（访问控制允许方法）：'GET、POST、DELETE、OPTIONS'、
+'Access-Control-Allow-Headers'：'Content-Type，X-Sync-Password'、
+}；
 
 function jsonResponse(data: any, status = 200): Response {
     return new Response(JSON.stringify(data), {
@@ -74,7 +74,7 @@ function jsonResponse(data: any, status = 200): Response {
             'Content-Type': 'application/json',
             ...corsHeaders
         }
-    });
+}）；
 }
 
 function isAuthenticated(request: Request, env: Env): boolean {
@@ -111,7 +111,7 @@ async function handleApiSync(request: Request, env: Env): Promise<Response> {
             if (action === 'backups') {
                 return await handleListBackups(env);
             }
-            return await handleGet(env);
+            返回 等handleGet(env);
         }
 
         if (request.method === 'POST') {
@@ -135,9 +135,9 @@ async function handleApiSync(request: Request, env: Env): Promise<Response> {
     } catch (error: any) {
         return jsonResponse({ success: false, error: error.message || '服务器错误' }, 500);
     }
-}
+}}
 
-async function handleGet(env: Env): Promise<Response> {
+异步function handleGet(env: Env): Promise<Response> {
     const data = await env.YNAV_WORKER_KV.get(KV_MAIN_DATA_KEY, 'json');
     if (!data) {
         return jsonResponse({ success: true, data: null, message: '云端暂无数据' });
@@ -190,7 +190,7 @@ async function handleBackup(request: Request, env: Env): Promise<Response> {
     const backupKey = `${KV_BACKUP_PREFIX}${timestamp}`;
 
     await env.YNAV_WORKER_KV.put(backupKey, JSON.stringify(body.data), {
-        expirationTtl: BACKUP_TTL_SECONDS
+expirationTtl：备份_TTL_SECONDS。
     });
 
     return jsonResponse({ success: true, backupKey, message: `备份成功: ${backupKey}` });
@@ -215,9 +215,9 @@ async function handleRestore(request: Request, env: Env): Promise<Response> {
 
     // 创建回滚点
     if (existingData) {
-        const rollbackTimestamp = new Date(now).toISOString().replace(/[:.]/g, '-').split('.')[0];
-        rollbackKey = `${KV_BACKUP_PREFIX}rollback-${rollbackTimestamp}`;
-        await env.YNAV_WORKER_KV.put(rollbackKey, JSON.stringify({
+constrollbackTimestamp=new。日期(现在)。toISOString()。替换（/[:.]/g，'-'）。分割('.')[0]；
+rollbackKey=`${KV_BACKUP_PREFIX}rollback-。${rollbackTimestamp}`；
+await env.YNAV_WORKER_KV.put(rollbackKey, JSON.字符串化({)
             ...existingData,
             meta: { ...existingData.meta, updatedAt: now, deviceId: body.deviceId || existingData.meta.deviceId }
         }), { expirationTtl: BACKUP_TTL_SECONDS });
@@ -242,7 +242,7 @@ async function handleListBackups(env: Env): Promise<Response> {
     const list = await env.YNAV_WORKER_KV.list({ prefix: KV_BACKUP_PREFIX });
 
     const backups = await Promise.all(list.keys.map(async (key) => {
-        let meta: SyncMetadata | null = null;
+let meta：SyncMetadata | null = null；
         try {
             const data = await env.YNAV_WORKER_KV.get(key.name, 'json') as YNavSyncData | null;
             meta = data?.meta || null;
@@ -258,7 +258,7 @@ async function handleListBackups(env: Env): Promise<Response> {
             version: meta?.version,
             browser: meta?.browser,
             os: meta?.os
-        };
+}；
     }));
 
     return jsonResponse({ success: true, backups });
@@ -266,15 +266,15 @@ async function handleListBackups(env: Env): Promise<Response> {
 
 async function handleDeleteBackup(request: Request, env: Env): Promise<Response> {
     const body = await request.json() as { backupKey?: string };
-    const backupKey = body.backupKey;
+const backupKey = body.backupKey；
 
-    if (!backupKey || !backupKey.startsWith(KV_BACKUP_PREFIX)) {
-        return jsonResponse({ success: false, error: '无效的备份 key' }, 400);
+如果(!备份键||备份密钥.始于(kv_backup_prefix)) {。
+返回 jsonResponse（{ 成功：false, error：'无效的备份 key' }，400)；
     }
 
     const backupData = await env.YNAV_WORKER_KV.get(backupKey, 'json');
     if (!backupData) {
-* Y-Nav Cloudflare Worker 入口return jsonResponse({ success: false, error: '备份不存在或已过期' }, 404);
+Y-Nav Cloudflare Worker 入口return jsonResponse({ success: false, error: '备份不存在或已过期' }, 404);
     }
 
     await env.YNAV_WORKER_KV.delete(backupKey);
