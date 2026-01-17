@@ -21,6 +21,7 @@ const assetManifest = JSON.parse(manifestJSON);
 interface KVNamespaceInterface {
     get(key: string, type?: 'text' | 'json' | 'arrayBuffer' | 'stream'): Promise<any>;
     put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+    delete(key: string): Promise<void>;
     list(options?: { prefix?: string }): Promise<{ keys: Array<{ name: string; expiration?: number }> }>;
 }
 
@@ -62,7 +63,7 @@ const BACKUP_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Sync-Password',
 };
 
@@ -121,6 +122,13 @@ async function handleApiSync(request: Request, env: Env): Promise<Response> {
                 return await handleRestore(request, env);
             }
             return await handlePost(request, env);
+        }
+
+        if (request.method === 'DELETE') {
+            if (action === 'backup') {
+                return await handleDeleteBackup(request, env);
+            }
+            return jsonResponse({ success: false, error: 'Method not allowed' }, 405);
         }
 
         return jsonResponse({ success: false, error: 'Method not allowed' }, 405);
@@ -254,6 +262,23 @@ async function handleListBackups(env: Env): Promise<Response> {
     }));
 
     return jsonResponse({ success: true, backups });
+}
+
+async function handleDeleteBackup(request: Request, env: Env): Promise<Response> {
+    const body = await request.json() as { backupKey?: string };
+    const backupKey = body.backupKey;
+
+    if (!backupKey || !backupKey.startsWith(KV_BACKUP_PREFIX)) {
+        return jsonResponse({ success: false, error: '无效的备份 key' }, 400);
+    }
+
+    const backupData = await env.YNAV_WORKER_KV.get(backupKey, 'json');
+    if (!backupData) {
+* Y-Nav Cloudflare Worker 入口return jsonResponse({ success: false, error: '备份不存在或已过期' }, 404);
+    }
+
+    await env.YNAV_WORKER_KV.delete(backupKey);
+    return jsonResponse({ success: true, message: '备份已删除' });
 }
 
 // ============================================
