@@ -420,40 +420,29 @@ async function handleDeleteBackup(request: Request, env: Env): Promise<Response>
 }
 
 // 主入口 - 使用 Cloudflare Pages Function 规范
-export const onRequest = async (context: { request: Request; env: Env }) => {
-    const { request, env } = context;
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
     const action = url.searchParams.get('action');
 
-    // 根据请求方法和 action 参数路由
     if (request.method === 'GET') {
-        if (action === 'backups') {
-            return handleListBackups(request, env);
-        }
-        return handleGet(request, env);
+      if (action === 'backups') return handleListBackups(request, env);
+      return handleGet(request, env);
     }
 
     if (request.method === 'POST') {
-        if (action === 'backup') {
-            return handleBackup(request, env);
-        }
-        if (action === 'restore') {
-            return handleRestoreBackup(request, env);
-        }
-        return handlePost(request, env);
+      if (action === 'backup') return handleBackup(request, env);
+      if (action === 'restore') return handleRestoreBackup(request, env);
+      return handlePost(request, env);
     }
 
     if (request.method === 'DELETE') {
-        if (action === 'backup') {
-            return handleDeleteBackup(request, env);
-        }
+      if (action === 'backup') return handleDeleteBackup(request, env);
     }
 
-    return new Response(JSON.stringify({
-        success: false,
-        error: 'Method not allowed'
-    }), {
-        status: 405,
-        headers: { 'Content-Type': 'application/json' }
+    return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' }
     });
+  }
 };
